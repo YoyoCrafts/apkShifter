@@ -1,0 +1,15 @@
+app:
+  name: appfanghong
+  port: 8000      #服务端口
+  apkpath: /Users/xiaobai/Downloads/a.apk #防红APK路径 注意更新apk时apk名字不能与之前的相同 因为系统缓存了一些文件
+  packagenametime: 60          #秒  新包名保留时间   时间太短会导致服务器cpu高 太长会导致app报毒 建议1-10分钟
+  walleinfo:         #walle渠道绑定拼接   正常就%s就行  unionuid是在渠道号前面加的前缀
+log:
+  file: temp/log       #日志目录
+  level: info          #trace debug info warning error fatal panic  日志级别
+  colour: true         #日志控制台是否显示不同颜色
+
+
+
+
+
