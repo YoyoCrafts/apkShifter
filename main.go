@@ -20,10 +20,13 @@ import (
 func timerRun() {
 	go func() {
 		for {
+			packagenametime := common.GetConf().App.Packagenametime
+			if packagenametime <0{
+				break
+			}
 			exception.TryFn(func() {
 				apktools.ReplacePackageData().ReplacePackageName()
 			})
-			packagenametime := common.GetConf().App.Packagenametime
 			time.Sleep(time.Duration(packagenametime) * time.Second)
 		}
 	}()

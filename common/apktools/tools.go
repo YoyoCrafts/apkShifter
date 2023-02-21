@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"math/rand"
 	"os"
@@ -100,12 +101,16 @@ func Zipalign(input string, out string) (err error) {
 
 	cmd = exec.Command(zipalign, args...)
 	output, err = cmd.CombinedOutput()
-	logrus.Debug(string(output))
+	outputString := string(output)
+	logrus.Debug(outputString)
 	logrus.Info(fmt.Sprintf("%s %s", zipalign, strings.Trim(fmt.Sprint(args), "[]")))
 	if err != nil {
 		logrus.Error(fmt.Sprintf("%s %s", zipalign, strings.Trim(fmt.Sprint(args), "[]")))
-		logrus.Error(string(output))
+		logrus.Error(outputString)
 		return
+	}
+	if !strings.Contains(outputString,"Verification succesful"){
+		err = fmt.Errorf("zipalign 验证不通过")
 	}
 
 	return
@@ -169,6 +174,7 @@ func TestDecompilePack(input,packageName,tempPath string)(out string,err error){
 		logrus.Error(string(output))
 		return
 	}
+	defer os.Remove(bao)
 
 
 	keyStorePath := tempPath + "/keystore"
@@ -181,17 +187,49 @@ func TestDecompilePack(input,packageName,tempPath string)(out string,err error){
 	if err != nil {
 		return
 	}
+	defer os.Remove(keyStoreFile)
+
 	zipFile := tempPath + "/" + packageName + "_zip.apk"
 	if common.PathExists(zipFile) {
 		DelFile(zipFile)
 	}
 	err = Zipalign(bao, zipFile)
+	if err != nil {
+		return
+	}
+
+	defer os.Remove(zipFile)
 
 	out = tempPath + "/" + packageName + "_sign.apk"
 	if common.PathExists(out) {
 		DelFile(out)
 	}
 	err = StartSigning(zipFile, out, keyStoreInfo)
+	return
+}
+
+func TestStartSigning(inputPath string, outPath string,tempPath string)(err error){
+
+	keyStorePath := tempPath + "/keystore"
+	if !common.PathExists(keyStorePath) {
+		os.MkdirAll(keyStorePath, 0755)
+	}
+	keyStoreFile := keyStorePath + "/keystore_TestStartSigning.jks"
+
+	keyStoreInfo, err := CreateKeyStore(keyStoreFile)
+	if err != nil {
+		return
+	}
+	zipFile := tempPath + "/TestStartSigning_zip.apk"
+	if common.PathExists(zipFile) {
+		DelFile(zipFile)
+	}
+	err = Zipalign(inputPath, zipFile)
+	if err != nil {
+		return
+	}
+
+	err = StartSigning(zipFile, outPath, keyStoreInfo)
 	return
 }
 
@@ -282,14 +320,18 @@ func SetPackageName(input string, newPackageName string) (signFile string, err e
 	if !common.PathExists(keyStorePath) {
 		os.MkdirAll(keyStorePath, 0755)
 	}
-	keyStoreFile := keyStorePath + "/keystore_" + newPackageName + ".jks"
-
+	keyStoreFile := keyStorePath + "/keystore_" + newPackageName + uuid.NewV4().String() + ".jks"
 	keyStoreInfo, err := CreateKeyStore(keyStoreFile)
 	if err != nil {
 		return
 	}
-	zipFile := tempPath + "/" + pathKey + "_zip.apk"
+	defer os.Remove(keyStoreFile)
+	zipFile := tempPath + "/" + pathKey + uuid.NewV4().String() + "_zip.apk"
 	err = Zipalign(out, zipFile)
+	if err != nil {
+		return
+	}
+	defer os.Remove(zipFile)
 
 	signFile = tempPath + "/" + pathKey + newPackageName + "_sign.apk"
 	err = StartSigning(zipFile, signFile, keyStoreInfo)

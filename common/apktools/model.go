@@ -53,6 +53,9 @@ func (c *ReplacePackage) ReplacePackageName() {
 		return
 	}
 
+
+
+
 	OldPackageNameKey := cache.Get(c.OldPackageNameKey)
 	if len(OldPackageNameKey) != 0 {
 		TimerDelFile(OldPackageNameKey, 120)
@@ -78,33 +81,18 @@ func (c *ReplacePackage) GetChannelPath(channelName string) (filePath string, er
 	md5Code := ""
 	if len(NewPackageNameKey) > 0 {
 		md5Code = fmt.Sprintf("%x", md5.Sum([]byte(NewPackageNameKey)))
+	}else  if len(OldPackageNameKey) > 0 {
+		md5Code = fmt.Sprintf("%x", md5.Sum([]byte(OldPackageNameKey)))
 	}
-	cacheKey := fmt.Sprintf("newChannelWalleFile:%s:%s", md5Code, channelName)
 
+
+	cacheKey := fmt.Sprintf("newChannelWalleFile:%s:%s", md5Code, channelName)
 	channelWalleFile := cache.Get(cacheKey)
 	if len(channelWalleFile) != 0 && common.PathExists(channelWalleFile) {
 		filePath = channelWalleFile
 		logrus.Info("下载缓存渠道签名包 channelName:" + channelName + " file:" + channelWalleFile + " :cacheKey:" + cacheKey)
 		return
 	}
-
-
-
-
-	if len(OldPackageNameKey) > 0 {
-		md5Code = fmt.Sprintf("%x", md5.Sum([]byte(OldPackageNameKey)))
-
-		cacheKey = fmt.Sprintf("newChannelWalleFile:%s:%s", md5Code, channelName)
-		channelWalleFile = cache.Get(cacheKey)
-		if len(channelWalleFile) != 0 && common.PathExists(channelWalleFile) {
-			filePath = channelWalleFile
-			logrus.Info("下载上一个缓存渠道签名包 channelName:" + channelName + " file:" + channelWalleFile + " :cacheKey:" + cacheKey)
-			go c.WalleStart(channelName)
-			return
-		}
-	}
-
-
 
 	filePath,err = c.WalleStart(channelName)
 	return
@@ -118,8 +106,8 @@ func (c *ReplacePackage)WalleStart(channelName string)  (filePath string, err er
 	NewPackageNameKey := cache.Get(c.NewPackageNameKey)
 	OldPackageNameKey := cache.Get(c.OldPackageNameKey)
 
-	lock.Lock()
-	defer lock.Unlock()
+	//lock.Lock()
+	//defer lock.Unlock()
 
 
 	md5Code := ""
@@ -184,8 +172,10 @@ func (c *ReplacePackage)WalleStart(channelName string)  (filePath string, err er
 			logrus.Error(errs)
 			return
 		}
-		signingFile := strings.TrimRight(filePath, ".apk")+"_sign.apk"
+		defer os.Remove(keyStoreFile)
 
+
+		signingFile := strings.TrimRight(filePath, ".apk")+"_sign.apk"
 
 		errs = StartSigning(packageNameFile,signingFile,keyStoreInfo)
 		if errs!=nil {
