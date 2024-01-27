@@ -1,7 +1,8 @@
+#!/bin/bash
 #yum install java -y
 #yum install zlib.i686 -y
 
-#!/bin/bash
+
 
 
 
@@ -11,7 +12,7 @@ if [ $? -eq 0 ]
 then
     echo 'installed'
 else
-    yum install java -y 
+    yum install java -y
 fi
 
 
@@ -23,3 +24,4 @@ then
 else
     yum install zlib.i686 -y
 fi
+

@@ -4,11 +4,9 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	uuid "github.com/satori/go.uuid"
+
 	"github.com/sirupsen/logrus"
-	"os"
-	"path/filepath"
-	"strings"
+
 	"sync"
 	"test/common"
 	"test/common/cache"
@@ -39,52 +37,58 @@ func TimerDelFile(file string, Minute int) {
 	}()
 }
 
-func (c *ReplacePackage) ReplacePackageName() {
+func (c *ReplacePackage) PackageIng() {
 
-	var md5Code = md5.Sum([]byte(common.GetConf().App.Apkpath))
+	var md5Code = md5.Sum([]byte(common.GetConf().App.ApkPath))
 	c.OldPackageNameKey = fmt.Sprintf("OldPackageNameKey:%x", md5Code)
 	c.NewPackageNameKey = fmt.Sprintf("NewPackageNameKey:%x", md5Code)
 
 	newPackageName := fmt.Sprintf("com.%s.%s.%s%d%d%d", RandomString(6), RandomString(6), RandomString(3), time.Now().Month(), time.Now().Day(), time.Now().Hour())
-	SetPackageNameFile, err := SetPackageName(common.GetConf().App.Apkpath, newPackageName)
-	if err != nil {
-		logrus.Error("更换apk 包名失败 file:" + common.GetConf().App.Apkpath)
-		logrus.Error(err)
-		return
+
+	var err error
+	var NewPackageNamePath string
+	if common.GetConf().App.ReplacePackageName {
+		NewPackageNamePath, err = SetPackageName(common.GetConf().App.ApkPath, newPackageName)
+		if err != nil {
+			logrus.Error("更换apk 包名失败 file:" + common.GetConf().App.ApkPath)
+			logrus.Error(err)
+			return
+		}
+	} else {
+		NewPackageNamePath, err = PackageSign(common.GetConf().App.ApkPath, false)
+		if err != nil {
+			logrus.Error("更换apk 签名失败 file:" + common.GetConf().App.ApkPath)
+			logrus.Error(err)
+			return
+		}
 	}
 
-
-
-
-	OldPackageNameKey := cache.Get(c.OldPackageNameKey)
-	if len(OldPackageNameKey) != 0 {
-		TimerDelFile(OldPackageNameKey, 120)
-		TimerDelFile(OldPackageNameKey+".idsig", 120)
+	OldPackageNamePath := cache.Get(c.OldPackageNameKey)
+	if len(OldPackageNamePath) != 0 {
+		TimerDelFile(OldPackageNamePath, 120)
+		TimerDelFile(OldPackageNamePath+".idsig", 120)
 	}
 
-	NewPackageNameKey := cache.Get(c.NewPackageNameKey)
-	if len(NewPackageNameKey) != 0 {
-		cache.Set(c.OldPackageNameKey, NewPackageNameKey, 60*60*24)
+	OldPackageNamePath = cache.Get(c.NewPackageNameKey)
+	if len(OldPackageNamePath) != 0 {
+		cache.Set(c.OldPackageNameKey, OldPackageNamePath, 60*60*24)
 	}
 
-	cache.Set(c.NewPackageNameKey, SetPackageNameFile, 60*60*24)
+	cache.Set(c.NewPackageNameKey, NewPackageNamePath, 60*60*24)
 
-	logrus.Info("APK 包名更换成功 新包名:" + newPackageName)
 }
 
-func (c *ReplacePackage) GetChannelPath(channelName string) (filePath string, err error) {
+func (c *ReplacePackage) GetChannelApkPath(channelName string) (filePath string, err error) {
 
+	NewPackagePath := cache.Get(c.NewPackageNameKey)
+	OldPackagePath := cache.Get(c.OldPackageNameKey)
 
-	NewPackageNameKey := cache.Get(c.NewPackageNameKey)
-	OldPackageNameKey := cache.Get(c.OldPackageNameKey)
-
-	md5Code := ""
-	if len(NewPackageNameKey) > 0 {
-		md5Code = fmt.Sprintf("%x", md5.Sum([]byte(NewPackageNameKey)))
-	}else  if len(OldPackageNameKey) > 0 {
-		md5Code = fmt.Sprintf("%x", md5.Sum([]byte(OldPackageNameKey)))
+	md5Code := "sourcePackage"
+	if len(NewPackagePath) > 0 {
+		md5Code = fmt.Sprintf("%x", md5.Sum([]byte(NewPackagePath)))
+	} else if len(OldPackagePath) > 0 {
+		md5Code = fmt.Sprintf("%x", md5.Sum([]byte(OldPackagePath)))
 	}
-
 
 	cacheKey := fmt.Sprintf("newChannelWalleFile:%s:%s", md5Code, channelName)
 	channelWalleFile := cache.Get(cacheKey)
@@ -94,27 +98,37 @@ func (c *ReplacePackage) GetChannelPath(channelName string) (filePath string, er
 		return
 	}
 
-	filePath,err = c.WalleStart(channelName)
+	filePath, err = c.WalleStart(channelName, cacheKey, NewPackagePath, OldPackagePath)
 	return
 
 }
 
-func (c *ReplacePackage)WalleStart(channelName string)  (filePath string, err error){
+func (c *ReplacePackage) GetDowApkPath() (filePath string, err error) {
 
+	NewPackagePath := cache.Get(c.NewPackageNameKey)
+	OldPackagePath := cache.Get(c.OldPackageNameKey)
 
+	filePath = common.GetConf().App.ApkPath
+	if common.PathExists(NewPackagePath) {
+		filePath = NewPackagePath
+		logrus.Info("使用最新包名 分包  channelName:" + " file:" + filePath)
+	} else if common.PathExists(OldPackagePath) {
+		filePath = OldPackagePath
+		logrus.Info("使用上一个包名 分包  channelName:" + " file:" + filePath)
+	} else {
+		if !common.PathExists(filePath) {
+			err = errors.New("请配置好apk路径")
+			return
+		}
 
-	NewPackageNameKey := cache.Get(c.NewPackageNameKey)
-	OldPackageNameKey := cache.Get(c.OldPackageNameKey)
-
-	//lock.Lock()
-	//defer lock.Unlock()
-
-
-	md5Code := ""
-	if len(NewPackageNameKey) > 0 {
-		md5Code = fmt.Sprintf("%x", md5.Sum([]byte(NewPackageNameKey)))
+		logrus.Info("使用未改名包 分包  channelName:" + " file:" + filePath)
 	}
-	cacheKey := fmt.Sprintf("newChannelWalleFile:%s:%s", md5Code, channelName)
+
+	return
+
+}
+
+func (c *ReplacePackage) WalleStart(channelName string, cacheKey, newPackagePath, oldPackagePath string) (filePath string, err error) {
 
 	channelWalleFile := cache.Get(cacheKey)
 
@@ -123,32 +137,12 @@ func (c *ReplacePackage)WalleStart(channelName string)  (filePath string, err er
 		return
 	}
 
-
-	tempPath, err := filepath.Abs("temp")
-	if err != nil {
-		logrus.Error(err)
-		return
-	}
-
-
-	wallePath := tempPath + "/wallepath"
-	if !common.PathExists(wallePath) {
-		os.MkdirAll(wallePath, 0755)
-	}
-
-	for {
-		filePath = wallePath + "/" + channelName + "_" + uuid.NewV4().String() + ".apk"
-		if !common.PathExists(filePath) {
-			break
-		}
-	}
-
-	packageNameFile := common.GetConf().App.Apkpath
-	if common.PathExists(NewPackageNameKey) {
-		packageNameFile = NewPackageNameKey
+	packageNameFile := common.GetConf().App.ApkPath
+	if common.PathExists(newPackagePath) {
+		packageNameFile = newPackagePath
 		logrus.Info("使用最新包名 分包  channelName:" + channelName + " file:" + packageNameFile)
-	} else if common.PathExists(OldPackageNameKey) {
-		packageNameFile = OldPackageNameKey
+	} else if common.PathExists(oldPackagePath) {
+		packageNameFile = oldPackagePath
 		logrus.Info("使用上一个包名 分包  channelName:" + channelName + " file:" + packageNameFile)
 	} else {
 
@@ -158,40 +152,9 @@ func (c *ReplacePackage)WalleStart(channelName string)  (filePath string, err er
 		}
 
 		logrus.Info("使用未改名包 分包  channelName:" + channelName + " file:" + packageNameFile)
-
-		////签名
-		keyStorePath := tempPath +"/keystore"
-		if !common.PathExists(keyStorePath){
-			os.MkdirAll(keyStorePath, 0755)
-		}
-		keyStoreFile := keyStorePath+"/keystore_"+uuid.NewV4().String()+".jks"
-
-		keyStoreInfo,errs :=  CreateKeyStore(keyStoreFile)
-		if errs!=nil {
-			logrus.Error("渠道包 生产签名失败  channelName:" + channelName + " file:" + filePath)
-			logrus.Error(errs)
-			return
-		}
-		defer os.Remove(keyStoreFile)
-
-
-		signingFile := strings.TrimRight(filePath, ".apk")+"_sign.apk"
-
-		errs = StartSigning(packageNameFile,signingFile,keyStoreInfo)
-		if errs!=nil {
-			logrus.Error("渠道包 签名失败  channelName:" + channelName + " file:" + filePath)
-			logrus.Error(errs)
-			return
-		}
-		defer TimerDelFile(signingFile, 60)
-
-		packageNameFile = signingFile
 	}
 
-
-
-
-	err = Walle(packageNameFile, filePath, channelName)
+	filePath, err = Walle(packageNameFile, channelName)
 	if err != nil {
 		logrus.Error("渠道包绑定ID失败  channelName:" + channelName + " file:" + filePath)
 		logrus.Error(err)
@@ -204,8 +167,7 @@ func (c *ReplacePackage)WalleStart(channelName string)  (filePath string, err er
 	}
 
 	cache.Set(cacheKey, filePath, 60*30)
-	packagenametime := common.GetConf().App.Packagenametime
+	packagenametime := common.GetConf().App.UpdateInterval
 	defer TimerDelFile(filePath, packagenametime+(60*2))
 	return
 }
-

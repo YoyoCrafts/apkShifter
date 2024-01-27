@@ -1,7 +1,6 @@
 package apktools
 
 import (
-	"crypto/md5"
 	"errors"
 	"fmt"
 	uuid "github.com/satori/go.uuid"
@@ -40,8 +39,22 @@ func DelFile(filepath string) {
 	}
 }
 
-func Walle(input string, out string, channel interface{}) (err error) {
-	DelFile(out)
+func Walle(input string, channel interface{}) (out string, err error) {
+	tempPath, err := filepath.Abs("temp")
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+	tempPath = tempPath + "/walle"
+	if !common.PathExists(tempPath) {
+		os.MkdirAll(tempPath, 0755)
+	}
+
+	out = tempPath + "/" + uuid.NewV4().String() + fmt.Sprint(channel) + ".apk"
+	if common.PathExists(out) {
+		os.Remove(out)
+	}
+
 	walle, err := filepath.Abs("config/library/walle-cli-all.jar")
 	args := make([]string, 0)
 	args = append(args, "-jar")
@@ -65,7 +78,23 @@ func Walle(input string, out string, channel interface{}) (err error) {
 	return
 }
 
-func Zipalign(input string, out string) (err error) {
+func Zipalign(input string) (out string, err error) {
+
+	tempPath, err := filepath.Abs("temp")
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+
+	tempPath = tempPath + "/zipalign"
+	if !common.PathExists(tempPath) {
+		os.MkdirAll(tempPath, 0755)
+	}
+
+	out = tempPath + "/" + uuid.NewV4().String() + "zip.apk"
+	if common.PathExists(out) {
+		os.Remove(out)
+	}
 	DelFile(out)
 
 	sysType := runtime.GOOS
@@ -109,30 +138,44 @@ func Zipalign(input string, out string) (err error) {
 		logrus.Error(outputString)
 		return
 	}
-	if !strings.Contains(outputString,"Verification succesful"){
+	if !strings.Contains(outputString, "Verification succesful") {
 		err = fmt.Errorf("zipalign 验证不通过")
 	}
 
 	return
 }
 
-func TestDecompile(input ,packageName,tempPath string) (out string,err error){
-	var apktool string
-	apktool, err = filepath.Abs("config/library/apktool")
-	out = tempPath + "/" + packageName + "_apk"
-	if common.PathExists(out) {
-		cmd := exec.Command("rm", "-rf", out)
-		cmd.CombinedOutput()
-	}
-
+// 替换apk包名并且签名
+func SetPackageName(input string, newPackageName string) (signFile string, err error) {
+	tempPath, err := filepath.Abs("temp")
 	if err != nil {
 		return
 	}
+	tempPath = tempPath + "/source/" + uuid.NewV4().String()
+	if !common.PathExists(tempPath) {
+		os.MkdirAll(tempPath, 0755)
+	}
+
+	compilePath := tempPath + "/compilePath"
+
+	out := tempPath + "/newPackageName.apk"
+
+	var apktool string
+	apktool, err = filepath.Abs("config/library/apktool")
+
+	if common.PathExists(tempPath) {
+		cmd := exec.Command("rm", "-rf", tempPath)
+		cmd.CombinedOutput()
+	}
+	if common.PathExists(out) {
+		os.Remove(out)
+	}
+
 	args := make([]string, 0)
 	args = append(args, "d")
 	args = append(args, input)
 	args = append(args, "-o")
-	args = append(args, out)
+	args = append(args, compilePath)
 	args = append(args, "--only-main-classes")
 
 	var output []byte
@@ -145,145 +188,6 @@ func TestDecompile(input ,packageName,tempPath string) (out string,err error){
 		logrus.Error(string(output))
 		return
 	}
-	return
-}
-
-func TestDecompilePack(input,packageName,tempPath string)(out string,err error){
-
-	var apktool string
-	apktool, err = filepath.Abs("config/library/apktool")
-	bao := tempPath + "/" + packageName + "_bao.apk"
-	if common.PathExists(bao) {
-		DelFile(bao)
-	}
-
-
-	args := make([]string, 0)
-	args = append(args, "b")
-	args = append(args, "-o")
-	args = append(args, bao)
-	args = append(args, input)
-
-	var output []byte
-	cmd := exec.Command(apktool, args...)
-	output, err = cmd.CombinedOutput()
-	logrus.Debug(string(output))
-	logrus.Info(fmt.Sprintf("%s %s", apktool, strings.Trim(fmt.Sprint(args), "[]")))
-	if err != nil {
-		logrus.Error(fmt.Sprintf("%s %s", apktool, strings.Trim(fmt.Sprint(args), "[]")))
-		logrus.Error(string(output))
-		return
-	}
-	defer os.Remove(bao)
-
-
-	keyStorePath := tempPath + "/keystore"
-	if !common.PathExists(keyStorePath) {
-		os.MkdirAll(keyStorePath, 0755)
-	}
-	keyStoreFile := keyStorePath + "/keystore_" + packageName + ".jks"
-
-	keyStoreInfo, err := CreateKeyStore(keyStoreFile)
-	if err != nil {
-		return
-	}
-	defer os.Remove(keyStoreFile)
-
-	zipFile := tempPath + "/" + packageName + "_zip.apk"
-	if common.PathExists(zipFile) {
-		DelFile(zipFile)
-	}
-	err = Zipalign(bao, zipFile)
-	if err != nil {
-		return
-	}
-
-	defer os.Remove(zipFile)
-
-	out = tempPath + "/" + packageName + "_sign.apk"
-	if common.PathExists(out) {
-		DelFile(out)
-	}
-	err = StartSigning(zipFile, out, keyStoreInfo)
-	return
-}
-
-func TestStartSigning(inputPath string, outPath string,tempPath string)(err error){
-
-	keyStorePath := tempPath + "/keystore"
-	if !common.PathExists(keyStorePath) {
-		os.MkdirAll(keyStorePath, 0755)
-	}
-	keyStoreFile := keyStorePath + "/keystore_TestStartSigning.jks"
-
-	keyStoreInfo, err := CreateKeyStore(keyStoreFile)
-	if err != nil {
-		return
-	}
-	zipFile := tempPath + "/TestStartSigning_zip.apk"
-	if common.PathExists(zipFile) {
-		DelFile(zipFile)
-	}
-	err = Zipalign(inputPath, zipFile)
-	if err != nil {
-		return
-	}
-
-	err = StartSigning(zipFile, outPath, keyStoreInfo)
-	return
-}
-
-func SetPackageName(input string, newPackageName string) (signFile string, err error) {
-	tempPath, err := filepath.Abs("temp")
-	if err != nil {
-		return
-	}
-	tempPath = tempPath + "/source"
-	if !common.PathExists(tempPath) {
-		os.MkdirAll(tempPath, 0755)
-	}
-
-	md5Code := md5.Sum([]byte(input))
-	pathKey := fmt.Sprintf("%x", md5Code)
-
-	compilePath := tempPath + "/" + pathKey + "_apk"
-	out := tempPath + "/" + pathKey + "_bao.apk"
-
-	var apktool string
-	apktool, err = filepath.Abs("config/library/apktool")
-
-	if common.PathExists(compilePath) && common.PathExists(out) {
-		DelFile(out)
-	} else {
-		if common.PathExists(compilePath) {
-			cmd := exec.Command("rm", "-rf", compilePath)
-			cmd.CombinedOutput()
-		}
-		if common.PathExists(out) {
-			DelFile(out)
-		}
-
-		if err != nil {
-			return
-		}
-		args := make([]string, 0)
-		args = append(args, "d")
-		args = append(args, input)
-		args = append(args, "-o")
-		args = append(args, compilePath)
-		args = append(args, "--only-main-classes")
-
-		var output []byte
-		cmd := exec.Command(apktool, args...)
-		output, err = cmd.CombinedOutput()
-		logrus.Debug(string(output))
-		logrus.Info(fmt.Sprintf("%s %s", apktool, strings.Trim(fmt.Sprint(args), "[]")))
-		if err != nil {
-			logrus.Error(fmt.Sprintf("%s %s", apktool, strings.Trim(fmt.Sprint(args), "[]")))
-			logrus.Error(string(output))
-			return
-		}
-	}
 
 	old_package_name, err := common.FileFindAllS(compilePath+"/AndroidManifest.xml", `package="(.*?)"`)
 	if err != nil {
@@ -293,20 +197,15 @@ func SetPackageName(input string, newPackageName string) (signFile string, err e
 		err = errors.New("没有找到AndroidManifest.xml中的包名")
 		return
 	}
-	//old_package_name_tow := fmt.Sprintf("package=\"%s\"",old_package_name)
-	//newPackageName_tow   := fmt.Sprintf("package=\"%s\"",newPackageName)
-	//err = common.ReplaceFileContents(compilePath + "/AndroidManifest.xml",old_package_name_tow,newPackageName_tow)
-
 	err = common.ReplaceFileContents(compilePath+"/AndroidManifest.xml", old_package_name, newPackageName)
 
-	args := make([]string, 0)
+	args = make([]string, 0)
 	args = append(args, "b")
 	args = append(args, "-o")
 	args = append(args, out)
 	args = append(args, compilePath)
 
-	var output []byte
-	cmd := exec.Command(apktool, args...)
+	cmd = exec.Command(apktool, args...)
 	output, err = cmd.CombinedOutput()
 	logrus.Debug(string(output))
 	logrus.Info(fmt.Sprintf("%s %s", apktool, strings.Trim(fmt.Sprint(args), "[]")))
@@ -316,32 +215,50 @@ func SetPackageName(input string, newPackageName string) (signFile string, err e
 		return
 	}
 
-	keyStorePath := tempPath + "/keystore"
-	if !common.PathExists(keyStorePath) {
-		os.MkdirAll(keyStorePath, 0755)
-	}
-	keyStoreFile := keyStorePath + "/keystore_" + newPackageName + uuid.NewV4().String() + ".jks"
-	keyStoreInfo, err := CreateKeyStore(keyStoreFile)
-	if err != nil {
-		return
-	}
-	defer os.Remove(keyStoreFile)
-	zipFile := tempPath + "/" + pathKey + uuid.NewV4().String() + "_zip.apk"
-	err = Zipalign(out, zipFile)
-	if err != nil {
-		return
-	}
-	defer os.Remove(zipFile)
-
-	signFile = tempPath + "/" + pathKey + newPackageName + "_sign.apk"
-	err = StartSigning(zipFile, signFile, keyStoreInfo)
-	//err = StartSigning(out,signFile,keyStoreInfo)
-	return
+	return PackageSign(out, true)
 
 }
 
+func PackageSign(input string, zip bool) (signFile string, err error) {
+
+	if zip {
+		input, err = Zipalign(input)
+		if err != nil {
+			return
+		}
+		defer os.Remove(input)
+	}
+
+	keyStoreInfo, err := CreateKeyStore()
+	if err != nil {
+		return
+	}
+
+	signFile, err = StartSigning(input, keyStoreInfo)
+
+	defer os.Remove(keyStoreInfo.KeyStorePath)
+	return
+}
+
 // 开始签名
-func StartSigning(inputPath string, outPath string, keyStoreInfo KeyStoreInfo) (err error) {
+func StartSigning(inputPath string, keyStoreInfo KeyStoreInfo) (outPath string, err error) {
+
+	tempPath, err := filepath.Abs("temp")
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+
+	tempPath = tempPath + "/sign"
+	if !common.PathExists(tempPath) {
+		os.MkdirAll(tempPath, 0755)
+	}
+
+	outPath = tempPath + "/" + uuid.NewV4().String() + "sign.apk"
+	if common.PathExists(outPath) {
+		os.Remove(outPath)
+		os.Remove(outPath + ".idsig")
+	}
 	DelFile(outPath)
 	DelFile(outPath + ".idsig")
 
@@ -359,6 +276,8 @@ func StartSigning(inputPath string, outPath string, keyStoreInfo KeyStoreInfo) (
 	args = append(args, "--v1-signing-enabled")
 	args = append(args, "true")
 	args = append(args, "--v2-signing-enabled")
+	args = append(args, "true")
+	args = append(args, "--v3-signing-enabled")
 	args = append(args, "true")
 	args = append(args, "--ks-pass")
 	args = append(args, "pass:"+keyStoreInfo.KeyStorePass)
@@ -379,35 +298,64 @@ func StartSigning(inputPath string, outPath string, keyStoreInfo KeyStoreInfo) (
 		logrus.Error(string(output))
 		return
 	}
+	err = StartSigningVerify(outPath)
+	if err != nil {
+		return
+	}
 
+	return
+
+}
+
+func StartSigningVerify(inputPath string) (err error) {
+	apksigner, err := filepath.Abs("config/library/apksigner.jar")
+	args := make([]string, 0)
 	args = make([]string, 0)
 	args = append(args, "-jar")
 	args = append(args, apksigner)
 	args = append(args, "verify")
 	args = append(args, "--verbose")
 	args = append(args, "--print-certs")
-	args = append(args, outPath)
+	args = append(args, inputPath)
 
-	cmd = exec.Command("java", args...)
-	output, err = cmd.CombinedOutput()
-	logrus.Debug(string(output))
+	cmd := exec.Command("java", args...)
+	output, err := cmd.CombinedOutput()
+	outputString := string(output)
+	logrus.Debug(outputString)
 	logrus.Info(fmt.Sprintf("java %s", strings.Trim(fmt.Sprint(args), "[]")))
 	if err != nil {
 		logrus.Error(fmt.Sprintf("java %s", strings.Trim(fmt.Sprint(args), "[]")))
 		logrus.Error(string(output))
 		return
 	}
+	if strings.Contains(outputString, "Verified using v2 scheme (APK Signature Scheme v2): true") &&
+		strings.Contains(outputString, "Number of signers: 1") {
+		return
+	}
+	err = fmt.Errorf("签名 验证不通过 \n%s", outputString)
 	return
-
 }
 
-//  创建签名
-func CreateKeyStore(KeyStorePath string) (keyStoreInfo KeyStoreInfo, err error) {
+// 创建签名
+func CreateKeyStore() (keyStoreInfo KeyStoreInfo, err error) {
+	tempPath, err := filepath.Abs("temp")
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+	tempPath = tempPath + "/keystore"
+	if !common.PathExists(tempPath) {
+		os.MkdirAll(tempPath, 0755)
+	}
 
-	DelFile(KeyStorePath)
+	keyStoreFile := tempPath + "/" + uuid.NewV4().String() + "keystore.jks"
+	if common.PathExists(keyStoreFile) {
+		os.Remove(keyStoreFile)
+	}
+
 	pass := RandomString(8)
 	keyStoreInfo = KeyStoreInfo{
-		KeyStorePath:      KeyStorePath,
+		KeyStorePath:      keyStoreFile,
 		KeyStorePass:      pass,
 		KeyStoreAlias:     RandomString(4),
 		KeyStoreAliasPass: pass,
@@ -428,9 +376,9 @@ func CreateKeyStore(KeyStorePath string) (keyStoreInfo KeyStoreInfo, err error) 
 	args = append(args, "-dname")
 	args = append(args, "cn=client-344-839")
 	args = append(args, "-keypass")
-	args = append(args, keyStoreInfo.KeyStorePass)
-	args = append(args, "-storepass")
 	args = append(args, keyStoreInfo.KeyStoreAliasPass)
+	args = append(args, "-storepass")
+	args = append(args, keyStoreInfo.KeyStorePass)
 	args = append(args, "-alias")
 	args = append(args, keyStoreInfo.KeyStoreAlias)
 	args = append(args, "-keystore")

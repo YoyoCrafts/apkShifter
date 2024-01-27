@@ -12,15 +12,17 @@ import (
 )
 
 func PathExists(path string) bool {
-	_,err := os.Stat(path)
-	if err == nil{
+	if len(path) == 0 {
+		return false
+	}
+	_, err := os.Stat(path)
+	if err == nil {
 		return true
 	}
 	return false
 }
 
-
-func FileFindAllS(fileName string,str string) ( re string,err error){
+func FileFindAllS(fileName string, str string) (re string, err error) {
 
 	file, err := os.OpenFile(fileName, os.O_RDWR, 0666)
 	if err != nil {
@@ -44,7 +46,7 @@ func FileFindAllS(fileName string,str string) ( re string,err error){
 
 		res := regexp.MustCompile(str)
 		alls := res.FindAllStringSubmatch(line, -1)
-		if len(alls) > 0{
+		if len(alls) > 0 {
 			re = alls[0][1]
 			return
 		}
@@ -55,7 +57,7 @@ func FileFindAllS(fileName string,str string) ( re string,err error){
 	return
 }
 
-func ReplaceFileContents(fileName string,oldString string,newString string) (err error){
+func ReplaceFileContents(fileName string, oldString string, newString string) (err error) {
 
 	file, err := os.OpenFile(fileName, os.O_RDWR, 0666)
 	if err != nil {
@@ -70,7 +72,6 @@ func ReplaceFileContents(fileName string,oldString string,newString string) (err
 	}
 	defer out.Close()
 
-
 	br := bufio.NewReader(file)
 	index := 1
 	for {
@@ -84,7 +85,7 @@ func ReplaceFileContents(fileName string,oldString string,newString string) (err
 			os.Exit(-1)
 			return
 		}
-		newLine := strings.Replace(string(line), oldString, newString, -1)
+		newLine := strings.ReplaceAll(string(line), oldString, newString)
 		_, err = out.WriteString(newLine + "\n")
 		if err != nil {
 			os.Exit(-1)
@@ -93,13 +94,12 @@ func ReplaceFileContents(fileName string,oldString string,newString string) (err
 		index++
 	}
 
-
 	DelFile(fileName)
 	if err == nil {
 		err = os.Rename(fileName+".mdf", fileName)
 	}
 
-	defer DelFile(fileName+".mdf")
+	defer DelFile(fileName + ".mdf")
 
 	return
 }
@@ -158,7 +158,7 @@ func Substr(str string, start, length int) string {
 	return string(rs[start:end])
 }
 
-func DelFile(filepath string)  {
+func DelFile(filepath string) {
 	if PathExists(filepath) {
 		os.Remove(filepath)
 	}
