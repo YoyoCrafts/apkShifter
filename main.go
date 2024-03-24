@@ -17,14 +17,14 @@ func timerRun() {
 
 	go func() {
 		for {
-			updateInterval := common.GetConf().App.UpdateInterval
-			if updateInterval <= 0 {
+
+			if !common.GetConf().App.UpdateConfig.Switch {
 				break
 			}
 			exception.TryFn(func() {
 				apktools.ReplacePackageData().PackageIng()
 			})
-			time.Sleep(time.Duration(updateInterval) * time.Second)
+			time.Sleep(time.Duration(common.GetConf().App.UpdateConfig.Interval) * time.Second)
 		}
 	}()
 }

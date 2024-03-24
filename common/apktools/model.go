@@ -47,7 +47,7 @@ func (c *ReplacePackage) PackageIng() {
 
 	var err error
 	var NewPackageNamePath string
-	if common.GetConf().App.ReplacePackageName {
+	if common.GetConf().App.UpdateConfig.ReplacePackageName {
 		NewPackageNamePath, err = SetPackageName(common.GetConf().App.ApkPath, newPackageName)
 		if err != nil {
 			logrus.Error("更换apk 包名失败 file:" + common.GetConf().App.ApkPath)
@@ -167,7 +167,7 @@ func (c *ReplacePackage) WalleStart(channelName string, cacheKey, newPackagePath
 	}
 
 	cache.Set(cacheKey, filePath, 60*30)
-	packagenametime := common.GetConf().App.UpdateInterval
+	packagenametime := common.GetConf().App.UpdateConfig.Interval
 	defer TimerDelFile(filePath, packagenametime+(60*2))
 	return
 }

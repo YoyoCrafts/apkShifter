@@ -14,10 +14,15 @@ type conf struct {
 }
 
 type app struct {
-	Port               int    `yaml:"port"`
-	ApkPath            string `yaml:"apkPath"`
-	UpdateInterval     int    `yaml:"updateInterval"`
-	ReplacePackageName bool   `yaml:"replacePackageName"`
+	Port         int          `yaml:"port"`
+	ApkPath      string       `yaml:"apkPath"`
+	UpdateConfig updateConfig `yaml:"updateConfig"`
+}
+
+type updateConfig struct {
+	Switch             bool `json:"switch"`
+	Interval           int  `json:"interval"`
+	ReplacePackageName bool `json:"replacePackageName"`
 }
 
 type log struct {
