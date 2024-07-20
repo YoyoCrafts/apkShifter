@@ -5,12 +5,6 @@ docker tag apkres:latest neikuwaichuan/apkres
 
 # 运行容器
 
-docker run -d \
-  -v ./config/config.yaml:/app/config/config.yaml \
-  -v ./apk:/app/apk
-  -v ./temp:/app/temp
-  -p 8000:8000 \
-  --restart always \
-  --name apkres \
-  neikuwaichuan/apkres
+docker run -d -v ./config/config.yaml:/app/config/config.yaml  -v ./apk:/app/apk -v ./temp:/app/temp -p 8000:8000  --restart always  --name apkres   neikuwaichuan/apkres
+
 

@@ -1,6 +1,6 @@
 app:
   port: 8000      #服务端口
-  apkPath: /Users/xiaobai/Downloads/VlinkVpn.apk #防红APK路径 注意更新apk时apk名字不能与之前的相同 因为系统缓存了一些文件
+  apkPath: /Users/xiaobai/Downloads/VlinkVPN_Android.apk #防红APK路径 注意更新apk时apk名字不能与之前的相同 因为系统缓存了一些文件
   updateConfig:
     switch: false
     interval: 20                 #签名变更间隔时间 0关闭签名变更
