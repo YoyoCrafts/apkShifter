@@ -32,21 +32,21 @@ fi
 
 # 判断是否已经通过缓存文件确认安装
 if [ -f "$CACHE_FILE" ]; then
-    echo "APKShifter 已经安装."
+    echo "apkShifter 已经安装."
 else
-    if [ ! -f "APKShifter.zip" ]; then
-        echo "正在下载 APKShifter.zip..."
+    if [ ! -f "apkShifter.zip" ]; then
+        echo "正在下载 apkShifter.zip..."
         curl -LO https://github.com/YoyoCrafts/apkShifter/releases/download/1.0.0/apkShifter.zip
     else
-        echo "APKShifter.zip 已存在."
+        echo "apkShifter.zip 已存在."
     fi
 
-    # 解压 APKShifter.zip
-    if [ ! -d "APKShifter" ]; then
-        echo "正在解压 APKShifter.zip..."
-        unzip APKShifter.zip -d APKShifter
+    # 解压 apkShifter.zip
+    if [ ! -d "apkShifter" ]; then
+        echo "正在解压 apkShifter.zip..."
+        unzip apkShifter.zip -d apkShifter
     else
-        echo "APKShifter 已解压."
+        echo "apkShifter 已解压."
     fi
 
     # 创建缓存文件，标记为已安装
@@ -63,12 +63,13 @@ read -p "请选择操作(1或2): " choice
 case $choice in
     1)
         echo "正在启动/重启服务..."
-        nohup ./APKShifter/server > apkshifter.log 2>&1 &
+        chmod +x ./apkShifter/server
+        nohup ./apkShifter/server > apkshifter.log 2>&1 &
         echo "服务已启动，正在后台运行。"
         ;;
     2)
         echo "正在停止服务..."
-        pkill -f ./APKShifter/server
+        pkill -f ./apkShifter/server
         echo "服务已停止。"
         ;;
     *)
