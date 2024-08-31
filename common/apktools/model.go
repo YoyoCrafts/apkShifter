@@ -47,7 +47,7 @@ func (c *ReplacePackage) PackageIng() {
 
 	var err error
 	var NewPackageNamePath string
-	if common.GetConf().App.UpdateConfig.ReplacePackageName {
+	if common.GetConf().App.UpdateConfig.ReplacePackageNameEnable {
 		NewPackageNamePath, err = SetPackageName(common.GetConf().App.ApkPath, newPackageName)
 		if err != nil {
 			logrus.Error("更换apk 包名失败 file:" + common.GetConf().App.ApkPath)

@@ -1,6 +1,6 @@
 uuids:
-    官方频道: "{\"param\":\"489cb8fa9694ccb7f35a164b82d344e9\"}"
-    破解群广告: "{\"param\":\"fb7fbba3fb9d3d82aa630eebad6cb818\"}"
-#input: /Volumes/DATA/Sourcetree/VlinkVPN_Client/android/app/apk/release/app-release.apk
-input: /Volumes/DATA/Sourcetree/VlinkVPN_Client/build/app/outputs/flutter-apk/app-release.apk
-appName: VlinkVPN_Android
+    官方频道: "{\"channelId\":52}"
+    破解群广告: "{\"channelId\":51}"
+    破解VPN软件机场: "{\"channelId\":54}"
+input:  /Volumes/DATA/Sourcetree/VlinkVPN_Client/build/app/outputs/flutter-apk/app-release.apk
+appName: VlinkVPN

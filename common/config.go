@@ -20,9 +20,8 @@ type app struct {
 }
 
 type updateConfig struct {
-	Switch             bool `json:"switch"`
-	Interval           int  `json:"interval"`
-	ReplacePackageName bool `json:"replacePackageName"`
+	ReplacePackageNameEnable bool `json:"replacePackageNameEnable"`
+	Interval                 int  `json:"interval"`
 }
 
 type log struct {
@@ -48,6 +47,10 @@ func GetConf() *conf {
 			fmt.Println(err.Error())
 		}
 		instance.App.ApkPath, _ = filepath.Abs(instance.App.ApkPath)
+
+		if instance.App.UpdateConfig.Interval == 0 {
+			instance.App.UpdateConfig.Interval = 60
+		}
 	})
 	return instance
 }
