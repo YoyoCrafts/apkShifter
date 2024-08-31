@@ -25,7 +25,7 @@ else
     # 检查并下载 APKShifter.zip
     if [ ! -f "APKShifter.zip" ]; then
         echo "正在下载 APKShifter.zip..."
-        curl -O https://****/APKShifter.zip
+        curl -O https://github.com/YoyoCrafts/apkShifter/releases/download/1.0.0/apkShifter.zip
     else
         echo "APKShifter.zip 已存在."
     fi
