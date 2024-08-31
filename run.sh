@@ -15,26 +15,25 @@ else
     exit 1
 fi
 
+    # 安装 Java 和 zlib
+IS_INSTALLED=$(java -version 2>&1 >/dev/null)
+if [ $? -eq 0 ]; then
+    echo 'Java 已安装'
+else
+    $INSTALL_CMD default-jre
+fi
+
+IS_INSTALLED=$(ldconfig -p | grep zlib)
+if [ $? -eq 0 ]; then
+    echo 'zlib 已安装'
+else
+    $INSTALL_CMD zlib1g zlib1g-dev
+fi
+
 # 判断是否已经通过缓存文件确认安装
 if [ -f "$CACHE_FILE" ]; then
     echo "APKShifter 已经安装."
 else
-    # 安装 Java 和 zlib
-    IS_INSTALLED=$(java -version 2>&1 >/dev/null)
-    if [ $? -eq 0 ]; then
-        echo 'Java 已安装'
-    else
-        $INSTALL_CMD default-jre
-    fi
-
-    IS_INSTALLED=$(ldconfig -p | grep zlib)
-    if [ $? -eq 0 ]; then
-        echo 'zlib 已安装'
-    else
-        $INSTALL_CMD zlib1g zlib1g-dev
-    fi
-
-    # 检查并下载 APKShifter.zip
     if [ ! -f "APKShifter.zip" ]; then
         echo "正在下载 APKShifter.zip..."
         curl -LO https://github.com/YoyoCrafts/apkShifter/releases/download/1.0.0/apkShifter.zip
@@ -64,7 +63,7 @@ read -p "请选择操作(1或2): " choice
 case $choice in
     1)
         echo "正在启动/重启服务..."
-        nohup ./APKShifter/server > /dev/null 2>&1 &
+        nohup ./APKShifter/server > apkshifter.log 2>&1 &
         echo "服务已启动，正在后台运行。"
         ;;
     2)
