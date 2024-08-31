@@ -13,9 +13,12 @@
 ```bash
 bash <(curl -sSL https://raw.githubusercontent.com/YoyoCrafts/apkShifter/master/run.sh) 
 ```
-- 安装成功后 
-- 通过 "http://ip:port/guide/download/任意名称.apk" 下载出来过的app
 
+- 配置文件 config/config.yaml
+- 配置后重新需要执行安装命令 选择1重启
+
+- 安装成功后
+- 通过 "http://ip:port/guide/download/任意名称.apk" 下载出来过的app
 
 - 如果apk已经集成了walle的需要自动打渠道包的话  
 - 通过"http://ip:port/channel/download/渠道信息/任意名称.apk" 将自动写入渠道信息
