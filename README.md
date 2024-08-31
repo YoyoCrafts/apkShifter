@@ -11,7 +11,7 @@
 
 ## 安装与使用
 ```bash
-bash <(curl -sSL https://github.com/YoyoCrafts/apkShifter/edit/main/run.sh) 
+bash <(curl -sSL https://raw.githubusercontent.com/YoyoCrafts/apkShifter/master/run.sh) 
 ```
 - 安装成功后 
 - 通过 "http://ip:port/guide/download/任意名称.apk" 下载出来过的app
