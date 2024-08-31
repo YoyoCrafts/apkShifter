@@ -3,29 +3,41 @@
 # 定义缓存文件路径
 CACHE_FILE="/var/tmp/apkshifter_installed"
 
+# 确定包管理器
+if command -v yum >/dev/null 2>&1; then
+    PKG_MANAGER="yum"
+    INSTALL_CMD="yum install -y"
+elif command -v apt-get >/dev/null 2>&1; then
+    PKG_MANAGER="apt-get"
+    INSTALL_CMD="apt-get install -y"
+else
+    echo "不支持的操作系统。需要yum或apt-get包管理器。"
+    exit 1
+fi
+
 # 判断是否已经通过缓存文件确认安装
 if [ -f "$CACHE_FILE" ]; then
     echo "APKShifter 已经安装."
 else
-    # 安装 Java 和 zlib.i686
-    IS_INSTALLED=$(rpm -qa |grep java)
+    # 安装 Java 和 zlib
+    IS_INSTALLED=$(java -version 2>&1 >/dev/null)
     if [ $? -eq 0 ]; then
         echo 'Java 已安装'
     else
-        yum install java -y
+        $INSTALL_CMD default-jre
     fi
 
-    IS_INSTALLED=$(rpm -qa |grep zlib.i686)
+    IS_INSTALLED=$(ldconfig -p | grep zlib)
     if [ $? -eq 0 ]; then
-        echo 'zlib.i686 已安装'
+        echo 'zlib 已安装'
     else
-        yum install zlib.i686 -y
+        $INSTALL_CMD zlib1g zlib1g-dev
     fi
 
     # 检查并下载 APKShifter.zip
     if [ ! -f "APKShifter.zip" ]; then
         echo "正在下载 APKShifter.zip..."
-        curl -O https://github.com/YoyoCrafts/apkShifter/releases/download/1.0.0/apkShifter.zip
+        curl -LO https://github.com/YoyoCrafts/apkShifter/releases/download/1.0.0/apkShifter.zip
     else
         echo "APKShifter.zip 已存在."
     fi
