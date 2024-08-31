@@ -28,3 +28,8 @@ bash <(curl -sSL https://raw.githubusercontent.com/YoyoCrafts/apkShifter/master/
 - 操作系统：Linux 服务器
 - 最低配置：2 核心 CPU，2GB 内存
 
+
+### 🎨 定制开发
+
+- 📱 **Telegram:** [联系 YoyoCrafts](https://t.me/yoyoCrafts) 
+
