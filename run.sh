@@ -75,7 +75,7 @@ case $choice in
         ;;
     2)
         echo "正在停止服务..."
-        pkill -f "$INSTALL_DIR/apkShifter/apkShifter"
+        pkill -f ./apkShifter
         echo "服务已停止。"
         ;;
     *)
