@@ -70,8 +70,8 @@ read -p "请选择操作(1或2): " choice
 case $choice in
     1)
         echo "正在启动/重启服务..."
-        chmod +x "$INSTALL_DIR/apkShifter/apkShifter"
-        cd "$INSTALL_DIR/apkShifter"
+        chmod +x "$INSTALL_DIR/apkShifter"
+        cd "$INSTALL_DIR"
         nohup ./apkShifter > apkshifter.log 2>&1 &
         echo "服务已启动，正在后台运行。"
         ;;
