@@ -3,10 +3,12 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"test/common"
 	"test/common/apktools"
 	"test/exception"
@@ -47,11 +49,26 @@ func main() {
 
 		channelName := c.Param("channelName")
 
-		apktempPath, err := apktools.ReplacePackageData().GetChannelApkPath(channelName)
-		if err != nil {
-			c.String(http.StatusBadRequest, err.Error())
+		v, err := url.QueryUnescape(channelName)
+		if err == nil {
+			channelName = v
+		}
+
+		var apktempPath string
+		if channelName == "{}" || channelName == "" || strings.ToLower(channelName) == "null" || strings.ToLower(channelName) == "undefined" {
+			apktempPath, err = apktools.ReplacePackageData().GetDowApkPath()
+			if err != nil {
+				c.String(http.StatusBadRequest, err.Error())
+			} else {
+				c.File(apktempPath)
+			}
 		} else {
-			c.File(apktempPath)
+			apktempPath, err = apktools.ReplacePackageData().GetChannelApkPath(channelName)
+			if err != nil {
+				c.String(http.StatusBadRequest, err.Error())
+			} else {
+				c.File(apktempPath)
+			}
 		}
 	})
 
