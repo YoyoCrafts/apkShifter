@@ -1,6 +1,6 @@
 uuids:
     官方频道: "{\"channelId\":52}"
-    fun_apk: "{\"channelId\":51}"
-    fun_vpn: "{\"channelId\":54}"
+    破解群广告: "{\"channelId\":51}"
+    破解VPN软件机场: "{\"channelId\":54}"
 input:  /Volumes/DATA/Sourcetree/VlinkVPN_Client/build/app/outputs/flutter-apk/app-release.apk
 appName: VlinkVPN
