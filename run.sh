@@ -43,7 +43,7 @@ else
     # 下载 apkShifter.zip
     if [ ! -f "$INSTALL_DIR/apkShifter.zip" ]; then
         echo "正在下载 apkShifter.zip..."
-        curl -L -o "$INSTALL_DIR/apkShifter.zip" https://github.com/YoyoCrafts/apkShifter/releases/download/1.0.0/apkShifter.zip
+        curl -L -o "$INSTALL_DIR/apkShifter.zip" https://github.com/YoyoCrafts/apkShifter/releases/download/1.0.0/apkShifter.zip?1.1
     else
         echo "apkShifter.zip 已存在."
     fi
