@@ -2,6 +2,7 @@
 
 # 定义安装目录和缓存文件路径
 INSTALL_DIR="$(pwd)"
+echo "安装目录: $INSTALL_DIR"
 #INSTALL_DIR="/opt/apkshifter"
 CACHE_FILE="$INSTALL_DIR/apkshifter_installed"
 
