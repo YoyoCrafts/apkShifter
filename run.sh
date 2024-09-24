@@ -52,7 +52,14 @@ else
     if [ ! -d "$INSTALL_DIR/apkShifter" ]; then
         echo "正在解压 apkShifter.zip..."
 #        unzip "$INSTALL_DIR/apkShifter.zip" -d "$INSTALL_DIR"
-        unzip -j "$INSTALL_DIR/apkShifter.zip" -d "$INSTALL_DIR"
+        # 创建临时目录
+        TEMP_DIR=$(mktemp -d)
+        # 解压 apkShifter.zip 到临时目录
+        unzip "$INSTALL_DIR/apkShifter.zip" -d "$TEMP_DIR"
+        # 移动内容到目标目录（排除顶层的 apkShifter 文件夹）
+        mv "$TEMP_DIR"/*/* "$INSTALL_DIR"
+        # 清理临时目录
+        rm -rf "$TEMP_DIR"
     else
         echo "apkShifter 已解压."
     fi
