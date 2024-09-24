@@ -51,7 +51,8 @@ else
     # 解压 apkShifter.zip
     if [ ! -d "$INSTALL_DIR/apkShifter" ]; then
         echo "正在解压 apkShifter.zip..."
-        unzip "$INSTALL_DIR/apkShifter.zip" -d "$INSTALL_DIR"
+#        unzip "$INSTALL_DIR/apkShifter.zip" -d "$INSTALL_DIR"
+        unzip -j "$INSTALL_DIR/apkShifter.zip" -d "$INSTALL_DIR"
     else
         echo "apkShifter 已解压."
     fi
