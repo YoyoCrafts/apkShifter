@@ -57,7 +57,7 @@ else
         # 解压 apkShifter.zip 到临时目录
         unzip "$INSTALL_DIR/apkShifter.zip" -d "$TEMP_DIR"
         # 移动内容到目标目录（排除顶层的 apkShifter 文件夹）
-        mv "$TEMP_DIR"/*/* "$INSTALL_DIR"
+        mv "$TEMP_DIR"/* "$INSTALL_DIR"
         # 清理临时目录
         rm -rf "$TEMP_DIR"
     else
