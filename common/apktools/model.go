@@ -54,13 +54,15 @@ func (c *ReplacePackage) PackageIng() {
 			logrus.Error(err)
 			return
 		}
-	} else {
+	} else if common.GetConf().App.UpdateConfig.IntervalEnable {
 		NewPackageNamePath, err = PackageSign(common.GetConf().App.ApkPath, false)
 		if err != nil {
 			logrus.Error("更换apk 签名失败 file:" + common.GetConf().App.ApkPath)
 			logrus.Error(err)
 			return
 		}
+	} else {
+		return
 	}
 
 	OldPackageNamePath := cache.Get(c.OldPackageNameKey)

@@ -21,6 +21,7 @@ type app struct {
 
 type updateConfig struct {
 	ReplacePackageNameEnable bool `json:"replacePackageNameEnable"`
+	IntervalEnable           bool `json:"intervalEnable"`
 	Interval                 int  `json:"interval"`
 }
 

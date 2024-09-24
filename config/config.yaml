@@ -1,8 +1,9 @@
 app:
   port: 8000  #服务端口
-  apkPath: /*/*.apk #需要处理的apk路径
+  apkPath: /Users/xiaobai/Downloads/VlinkVPN.apk #需要处理的apk路径
   updateConfig:
     replacePackageNameEnable: false  #是否启动更换包名 如不启动将只会自动换签名
+    intervalEnable: false
     interval: 20                     #更换周期单位秒 如设置0 默认60
 log:
   file: temp/log       #日志目录

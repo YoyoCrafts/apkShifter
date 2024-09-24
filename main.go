@@ -15,6 +15,9 @@ import (
 
 func timerRun() {
 
+	if !common.GetConf().App.UpdateConfig.IntervalEnable && !common.GetConf().App.UpdateConfig.ReplacePackageNameEnable {
+		return
+	}
 	go func() {
 		for {
 			exception.TryFn(func() {
