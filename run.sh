@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # 定义安装目录和缓存文件路径
-INSTALL_DIR="/opt/apkshifter"
+INSTALL_DIR="$(cd "$(dirname "$0")" && pwd)"
+#INSTALL_DIR="/opt/apkshifter"
 CACHE_FILE="$INSTALL_DIR/apkshifter_installed"
 
 # 确定包管理器
