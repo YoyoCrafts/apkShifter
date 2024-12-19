@@ -20,9 +20,9 @@ type app struct {
 }
 
 type updateConfig struct {
-	ReplacePackageNameEnable bool `json:"replacePackageNameEnable"`
-	IntervalEnable           bool `json:"intervalEnable"`
-	Interval                 int  `json:"interval"`
+	ReplacePackageNameEnable bool `yaml:"replacePackageNameEnable"`
+	IntervalEnable           bool `yaml:"intervalEnable"`
+	Interval                 int  `yaml:"interval"`
 }
 
 type log struct {

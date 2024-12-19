@@ -2,7 +2,7 @@ app:
   port: 8000  #服务端口
   apkPath: /Users/xiaobai/Downloads/UZX.apk #需要处理的apk路径
   updateConfig:
-    replacePackageNameEnable: false  #是否启动更换包名 如不启动将只会自动换签名
+    replacePackageNameEnable: true  #是否启动更换包名 如不启动将只会自动换签名
     intervalEnable: true             #更换签名开关
     interval: 20                     #更换周期单位秒 如设置0 默认60
 log:
