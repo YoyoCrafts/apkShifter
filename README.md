@@ -33,3 +33,6 @@ bash <(curl -sSL https://raw.githubusercontent.com/YoyoCrafts/apkShifter/master/
 
 - 📱 **Telegram:** [联系 YoyoCrafts](https://t.me/yoyoCrafts) 
 
+
+yum install -y zlib
+yum install -y zlib.i686
